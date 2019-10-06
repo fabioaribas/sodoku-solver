@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 M = [
 [0,0,3, 0,0,0, 5,0,0],
 [0,0,0, 1,2,8, 0,0,0],
@@ -9,6 +11,11 @@ M = [
 [0,0,0, 9,1,6, 0,0,0],
 [0,0,6, 0,0,0, 2,0,0]
 ]
+
+
+hyp_i = -1
+hyp_j = -1
+hyp_error = False
 
 
 def startPos(numBlock):
@@ -56,6 +63,11 @@ def lists3Intersect(a,b,c):
 	return listsIntersect( listsIntersect(a,b), listsIntersect(b,c) )
 
 def simpleSolveBlock(numBlock):
+        global hyp_i
+        global hyp_j
+        global hyp_pair
+        global hyp_error
+
         startp = startPos(numBlock)
         si = startp[0]
         sj = startp[1]
@@ -69,11 +81,18 @@ def simpleSolveBlock(numBlock):
                                 retj = retColValues(j)
                                 values = lists3Intersect(reti,retj,blockv)
                                 if (len(values)==1):
-                                        #print("i:%d j:%d %s (UPDATED)" % (i,j,str(values)))
+                                        print("i:%d j:%d %s (UPDATED)" % (i,j,str(values)))
                                         M[i][j] = values[0]
                                         updated = True
-                                #else:
-                                        #print("i:%d j:%d %s" % (i,j,str(values)))
+                                else:
+                                        print("i:%d j:%d %s" % (i,j,str(values)))
+                                if (len(values)==2):
+                                        hyp_i = i #set values for hypothesis solving
+                                        hyp_j = j
+                                        hyp_pair = deepcopy(values)
+                                if (len(values)==0):
+                                        hyp_error = True
+                                        
         return updated
 
 def solveBlocks():
@@ -91,6 +110,13 @@ def printMatrix():
                         else:
                                 print("%d" % M[i][j])
 
+
+
+#hypothesis solve choosing one of the 2 possible values
+#if calculation of return values of possibilities comes with empty possibilities [] then it was an error
+
+
+
 #start
 print('---')
 printMatrix()
@@ -103,3 +129,36 @@ print('---')
 printMatrix()
 print('---')
 
+Mcopy = deepcopy(M)
+if (hyp_i != -1):
+        print('stucked! hypothesis M[%d][%d] = %d or %d' % (hyp_i, hyp_j, hyp_pair[0], hyp_pair[1]))
+        M[hyp_i][hyp_j] = hyp_pair[0]
+        hyp_error = False
+        solveBlocks()
+        if (hyp_error):
+                M = deepcopy(Mcopy) #revert changes
+                M[hyp_i][hyp_j] = hyp_pair[1]
+                hyp_error = False
+                solveBlocks()
+                if (hyp_error):
+                        print("ERROR in hypothesis solving")
+                else:
+                        retUpdated = solveBlocks()
+                        while (retUpdated):
+                                retUpdated = solveBlocks()
+
+                        print('---')
+                        printMatrix()
+                        print('---')
+
+        else:
+                retUpdated = solveBlocks()
+                while (retUpdated):
+                        retUpdated = solveBlocks()
+
+                print('---')
+                printMatrix()
+                print('---')
+                
+else:
+        print("sorry, it is not possible to continue...")
